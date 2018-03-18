@@ -1,5 +1,5 @@
 #Edmund Goodman - Creative Commons Attribution-NonCommercial-ShareAlike 2.5
-#Object orientatated markov chain (stochastic text generator)
+#Markov Chain
 import os, sys, re, random, pickle
 
 class text(object):
