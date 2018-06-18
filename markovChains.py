@@ -1,58 +1,39 @@
 #Edmund Goodman - Creative Commons Attribution-NonCommercial-ShareAlike 2.5
-#Markov Chain
-import os, sys, re, random, pickle
+#Markov chain text generator
+import re, random, math
 
-class text(object):
-    def __init__(self, fileName):
-        self.fileName = fileName
-        self.fileText = self.getText()
-        self.chain = ""
+class analyseText:
+    def __init__(self, value):
+        self.value = value
 
-    def getText(self):
-        with open(self.fileName, "rt", encoding="utf-8") as f:
-            return f.read()
-
-    def getMarkovChain(self, chainLength=10, IWR=[r"\d\d\d:\d\d\d"], EOS=['.', '?', '!']):
-        def isValidWord(word):
-            #Abstraction of validation of word i.e. remove links
-            for regex in IWR:
-                if re.match(regex, word): return False
-            return True
-
-        def isChainFinished(chain, word):
-            #Abstraction of the end conditions of the chain
-            if (len(chain) > chainLength) and (word[-1] in EOS): return True
-            return False
-
-        #Get the words to base chain upon
-        words = [w for w in self.fileText.split(" ") if isValidWord(w) and w != '']
-
-        #Build the dictionary, using words from the corpus text
+    def getMarkovChain(self, length=100, endOfSentence=list('.?!')):
+        splitText = [w for w in self.value.replace("\n","").split(" ") if w != '']
         d = {}
-        for i, word in enumerate(words):
+        for count,word in enumerate(splitText[:-1]):
             try:
-                second = words[i+1]
-            except IndexError:
-                break
-            if word not in d:
-                d[word] = []
-            d[word].append(second)
+                d[word] = d[word] + [splitText[count+1]]
+            except KeyError:
+                d[word] = [splitText[count+1]]
 
+        word, chain, count = random.choice(splitText), "", 0
 
-        #Use the dictionary to randomly generate a chain
-        previousWord = random.choice([key for key in d.keys() if key[0][0].isupper()])
-        chain = [previousWord]
-        while True:
-            word = random.choice(d[previousWord])
-            chain.append(word)
-            if isChainFinished(chain, word):
-                break
-            previousWord = word
+        while count <= length or word[-1] not in endOfSentence:
+            try:
+                nextWord = random.choice(d[word])
+            except KeyError:
+                nextWord = random.choice(splitText)
+            chain += nextWord+" "
+            word = nextWord
+            count += 1
 
-        return " ".join(chain)
+        return chain[0].upper() + chain[1:-1]
 
-os.system('clear')
+def getText(targetFile):
+    with open(targetFile, "rt", encoding="utf-8") as f:
+        return f.read()
+
 targetFile = str(input("Target file: "))
-corpusText = text(targetFile)
-chain = corpusText.getMarkovChain(100)
-print(chain)
+corpusText = getText(targetFile)
+t = analyseText(corpusText)
+markovChain = t.getMarkovChain()
+print(markovChain)
