@@ -1,6 +1,6 @@
 #Edmund Goodman - Creative Commons Attribution-NonCommercial-ShareAlike 2.5
 #Markov chain text generator
-import re, random, math, pickle
+import random
 import numpy as np
 
 class MarkovChain:
