@@ -1,39 +1,67 @@
 #Edmund Goodman - Creative Commons Attribution-NonCommercial-ShareAlike 2.5
 #Markov chain text generator
-import re, random, math
+import re, random, math, pickle
+import numpy as np
 
-class analyseText:
-    def __init__(self, value):
-        self.value = value
+class MarkovChain:
+    def __init__(self, text):
+        #Initialise member variables
+        self.text = text
 
-    def getMarkovChain(self, length=100, endOfSentence=list('.?!')):
-        splitText = [w for w in self.value.replace("\n","").split(" ") if w != '']
+    def generateMarkovChain(self, length=100, EOS=list('.?!'), maxChunkWords=3, probability=1):
+        #Split the corpus text up by spaces
+        splitText = [w for w in self.text.replace("\n"," ").split(" ") if w != '']
+
+        #If the corpus text is too short, exit
+        if len(splitText) < 1+maxChunkWords:
+            raise Exception("Corpus text too short")
+
+        #If their is no punctuation in the corpus text, exit
+        if not any(x for x in splitText if x[-1] in EOS):
+            raise Exception("No punctuation in the corpus text")
+
+        #Generate a dictionary of words against a list of the list of all the next 2 words
         d = {}
-        for count,word in enumerate(splitText[:-1]):
+        for count,word in enumerate(splitText[:-maxChunkWords]):
             try:
-                d[word] = d[word] + [splitText[count+1]]
+                #If the word is already in the dictionary
+                for i in range(maxChunkWords):
+                    d[word][i].append(splitText[count+(i+1)])
             except KeyError:
-                d[word] = [splitText[count+1]]
+                #Otherwise, add a new dictionary entry
+                d[word] = [[splitText[count+(i+1)]] for i in range(maxChunkWords)]
 
-        word, chain, count = random.choice(splitText), "", 0
 
-        while count <= length or word[-1] not in endOfSentence:
-            try:
-                nextWord = random.choice(d[word])
-            except KeyError:
-                nextWord = random.choice(splitText)
-            chain += nextWord+" "
-            word = nextWord
-            count += 1
+        #Generate the chain based on the dictionary
+        chain = ""
 
+        #Choose a starting word at the beginning of the sentence, if there is a full sentence
+        word = random.choice([splitText[i] for i in range(len(splitText)) if splitText[i-1][-1] in EOS])
+
+        #Until the chain is too long, and the sentence has ended
+        while len(chain.split(" ")) <= length or word[-1] not in EOS:
+            #Use a binomial probability to randomly generate the number of words per chunk
+            actualChunkWords = int(np.random.binomial(maxChunkWords-1, probability, 1))+1
+
+            #Chose a random index from the first next word list to pick from
+            chosenWordIndex = random.randint(0, len(d[word][0])-1)
+            #Generate the chunk of words, of length actualChunkWords, from the chosenWordIndex
+            chosenWords = [d[word][i][chosenWordIndex] for i in range(actualChunkWords)]
+            #Add the chunk to the chain
+            chain += " ".join(chosenWords)+" "
+            #Set the last word of the chunk as the key for the next chunk
+            word = chosenWords[-1]
+
+        #Return the chain, with a capitalised 1st letter
         return chain[0].upper() + chain[1:-1]
 
 def getText(targetFile):
+    #Return a string containing the contents of the target file
     with open(targetFile, "rt", encoding="utf-8") as f:
         return f.read()
 
-targetFile = str(input("Target file: "))
-corpusText = getText(targetFile)
-t = analyseText(corpusText)
-markovChain = t.getMarkovChain()
-print(markovChain)
+#Generate the chain
+text = getText(str(input("Target file: ")))
+t = MarkovChain(text)
+chain = t.generateMarkovChain(100, list('.?!'), 3, .5)
+print(chain)
