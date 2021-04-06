@@ -1,17 +1,15 @@
-#Edmund Goodman - Creative Commons Attribution-NonCommercial-ShareAlike 2.5
 #Markov chain text generator
 import random
 import numpy as np
 
 class MarkovChain:
     def __init__(self, text):
-        #Initialise member variables
         self.text = text
 
     def generateMarkovChain(self, length=100, EOS=list('.?!'), maxChunkWords=3, probability=1):
+        """Generate a markov chain of words of a given lenth"""
         #Split the corpus text up by spaces
         splitText = [w for w in self.text.replace("\n"," ").split(" ") if w != '']
-
         #If the corpus text is too short, exit
         if len(splitText) < 1+maxChunkWords:
             raise Exception("Corpus text too short")
@@ -34,7 +32,6 @@ class MarkovChain:
 
         #Generate the chain based on the dictionary
         chain = ""
-
         #Choose a starting word at the beginning of the sentence, if there is a full sentence
         word = random.choice([splitText[i] for i in range(len(splitText)) if splitText[i-1][-1] in EOS])
 
@@ -42,7 +39,6 @@ class MarkovChain:
         while len(chain.split(" ")) <= length or word[-1] not in EOS:
             #Use a binomial probability to randomly generate the number of words per chunk
             actualChunkWords = int(np.random.binomial(maxChunkWords-1, probability, 1))+1
-
             #Chose a random index from the first next word list to pick from
             chosenWordIndex = random.randint(0, len(d[word][0])-1)
             #Generate the chunk of words, of length actualChunkWords, from the chosenWordIndex
@@ -56,12 +52,14 @@ class MarkovChain:
         return chain[0].upper() + chain[1:-1]
 
 def getText(targetFile):
-    #Return a string containing the contents of the target file
+    """Return a string containing the contents of the target file"""
     with open(targetFile, "rt", encoding="utf-8") as f:
         return f.read()
 
-#Generate the chain
-text = getText(str(input("Target file: ")))
-t = MarkovChain(text)
-chain = t.generateMarkovChain(100, list('.?!'), 3, .5)
-print(chain)
+if __name__=="__main__":
+    #Generate the chain
+    filename = "../corpus.txt" #str(input("Target file: "))
+    text = getText(filename)
+    t = MarkovChain(text)
+    chain = t.generateMarkovChain(100, list('.?!'), 3, .5)
+    print(chain)

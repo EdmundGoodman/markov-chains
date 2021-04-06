@@ -50,7 +50,7 @@ int main() {
   int length = 100;
 
   //Read the contents of the file into a string
-  char targetFile[] = "./corpus.txt";
+  char targetFile[] = "../corpus.txt";
   std::string text = getFileContents(targetFile);
 
   //Split the string into individual words my spaces
